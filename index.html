@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#E6F4EA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="0원 챌린지">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>우리 0원 챌린지</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -965,7 +972,13 @@ function firestoreAdapter(fs){
 }
 
 async function boot(){
-  if (!ROOM_RE.test(roomId)){ showLanding(); return; }
+  if (!ROOM_RE.test(roomId)){
+    // Opened from the home-screen icon: go straight to the last challenge on this phone.
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+    const last = recentRooms()[0];
+    if (standalone && last){ location.hash = last.id; return; }
+    showLanding(); return;
+  }
   $("app").hidden = false;
   $("invite").hidden = lsGet(LS_KEY+":invited") === "1";
   renderAll();
