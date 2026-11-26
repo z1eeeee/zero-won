@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#EEF1FF">
+<title>우리 0원 챌린지</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: sticker-style cards. Calendar on the left, today / score / battle / rules stacked on the right; one column on phones. */
+:root{
+  --bg:#EEF1FF; --surface:#FFFFFF; --surface-2:#E4E8FA; --ink:#29274F; --muted:#6B6992; --line:#D3D8F2;
+  --pink:#FF6A9C; --blue:#4D7BF3; --orange:#F0871F; --purple:#8A68EE;
+  --ok:#159E70; --bad:#E0483F; --coin:#FFC33A; --coin-ink:#5E4100; --on-color:#FFFFFF;
+  --f-display:"Jua","Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-body:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --r:18px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16152A; --surface:#211F3A; --surface-2:#2C2A4B; --ink:#EEECFF; --muted:#A6A3CC; --line:#3A3864;
+  --pink:#FF86B0; --blue:#7B9DFF; --orange:#FFA65A; --purple:#AD95FF;
+  --ok:#3FCB96; --bad:#FF7A70; --coin:#FFCB55; --coin-ink:#3F2B00; --on-color:#16152A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16152A; --surface:#211F3A; --surface-2:#2C2A4B; --ink:#EEECFF; --muted:#A6A3CC; --line:#3A3864;
+  --pink:#FF86B0; --blue:#7B9DFF; --orange:#FFA65A; --purple:#AD95FF;
+  --ok:#3FCB96; --bad:#FF7A70; --coin:#FFCB55; --coin-ink:#3F2B00; --on-color:#16152A; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:10px}
+.wrap{max-width:1040px;margin:0 auto;padding-block:20px 48px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 260px}
+.brand svg{flex:none;width:54px;height:54px}
+.brand h1{font-family:var(--f-display);font-weight:400;font-size:1.9rem;line-height:1.1;margin:0;text-wrap:balance}
+.status{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted);margin-top:2px}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.status[data-s="live"] i{background:var(--ok)}
+.status[data-s="slow"] i,.status[data-s="ro"] i{background:var(--orange)}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-weight:700;box-shadow:0 3px 0 var(--line);transition:transform .08s}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);box-shadow:0 3px 0 var(--pink)}
+
+/* grid */
+.grid{display:grid;gap:16px;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);
+  grid-template-areas:"cal today" "cal score" "cal battle" "cal rules";align-items:start}
+.a-cal{grid-area:cal}.a-today{grid-area:today}.a-score{grid-area:score}.a-battle{grid-area:battle}.a-rules{grid-area:rules}
+@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"today" "cal" "score" "battle" "rules"}}
+.card{background:var(--surface);border:2px solid var(--line);border-radius:var(--r);box-shadow:0 4px 0 var(--line);padding:16px;min-width:0}
+.card h2{font-family:var(--f-display);font-weight:400;font-size:1.25rem;margin:0}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.eyebrow{font-size:.75rem;letter-spacing:.08em;color:var(--muted);font-weight:700}
+
+/* calendar controls */
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:999px;padding:5px 12px;font-weight:700;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 2px 0 var(--line)}
+.nav{display:flex;align-items:center;gap:6px}
+.nav .ic{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--surface);font-weight:700;display:grid;place-items:center}
+.nav .lbl{font-family:var(--f-display);font-size:1.15rem;min-width:7.5em;text-align:center;font-variant-numeric:tabular-nums}
+.nav .td{border:0;background:none;color:var(--blue);font-weight:700;padding:4px 6px}
+
+.dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:6px;text-align:center;font-size:.8rem;color:var(--muted);font-weight:700}
+.dow span:nth-child(6){color:var(--blue)}.dow span:nth-child(7){color:var(--pink)}
+.month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.cell{border:2px solid transparent;background:var(--surface-2);border-radius:14px;min-height:74px;padding:6px 4px 5px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.cell:hover{border-color:var(--line)}
+.cell .dn{font-family:var(--f-display);font-size:1rem;line-height:1;font-variant-numeric:tabular-nums}
+.cell.out{opacity:.38}
+.cell.future{background:transparent;border:2px dashed var(--line)}
+.cell.today{border-color:var(--ink);background:var(--surface)}
+.cell.today .dn{background:var(--ink);color:var(--bg);border-radius:999px;padding:2px 7px}
+.stamps{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;max-width:44px}
+@media (max-width:480px){.cell{min-height:58px;padding:5px 2px}.month,.dow{gap:4px}.stamps{max-width:36px}.stamp{width:15px;height:15px;font-size:10px}}
+
+/* stamps: s = 0원 성공, f = 돈 씀, t = 목표일(비어 있음), n = 자유일(비어 있음) */
+.stamp{width:18px;height:18px;border-radius:50%;display:inline-grid;place-items:center;font-family:var(--f-display);font-size:11px;line-height:1;font-style:normal;flex:none}
+.stamp.s{background:var(--pc);color:var(--on-color);box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)}
+.stamp.s::before{content:"0"}
+.stamp.f{background:var(--surface);color:var(--bad);border:2px solid var(--bad);font-size:12px}
+.stamp.f::before{content:"×"}
+.stamp.t{border:2px dashed var(--pc);background:transparent}
+.stamp.n{background:transparent;border:2px solid transparent}
+.stamp.n::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--line)}
+.pop{animation:pop .28s ease-out}
+@keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.18)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}.btn{transition:none}}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:.8rem;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend .sw{width:12px;height:12px;border-radius:50%;background:var(--pc)}
+
+/* week view */
+.week{display:flex;flex-direction:column;gap:8px}
+.wrow{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:center;background:var(--surface-2);border-radius:14px;padding:8px 10px;border:2px solid transparent}
+.wrow.today{border-color:var(--ink);background:var(--surface)}
+.wrow.future{background:transparent;border:2px dashed var(--line)}
+.wday{text-align:center;line-height:1.1}
+.wday b{font-family:var(--f-display);font-weight:400;font-size:1.35rem;display:block;font-variant-numeric:tabular-nums}
+.wday span{font-size:.78rem;color:var(--muted)}
+.wcells{display:flex;flex-wrap:wrap;gap:6px}
+.wpill{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px 4px 5px;font-size:.85rem;min-width:0}
+.wpill b{font-weight:700;max-width:7em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wpill em{font-style:normal;color:var(--muted);font-size:.78rem}
+.wpill.is-s{border-color:var(--pc)}
+.wpill.is-f em{color:var(--bad)}
+
+/* today */
+.trow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-top:2px dashed var(--line)}
+.trow:first-of-type{border-top:0;padding-top:0}
+.who{display:flex;flex-direction:column;min-width:0}
+.who b{display:flex;align-items:center;gap:6px;font-size:1.02rem}
+.who b i{width:12px;height:12px;border-radius:50%;background:var(--pc);flex:none}
+.who small{color:var(--muted);font-size:.8rem}
+.who small.hint{color:var(--ink);font-weight:700}
+.streak{display:inline-flex;align-items:center;gap:3px;background:var(--coin);color:var(--coin-ink);border-radius:999px;padding:1px 8px 1px 6px;font-family:var(--f-display);font-weight:400;font-size:.8rem;white-space:nowrap}
+.streak svg{width:10px;height:12px}
+.tbtns{display:flex;gap:6px}
+.tb{border:2px solid var(--line);background:var(--surface);border-radius:12px;padding:7px 11px;font-weight:700;font-size:.9rem;box-shadow:0 3px 0 var(--line)}
+.tb.ok.on{background:var(--pc);border-color:var(--pc);color:var(--on-color);box-shadow:0 3px 0 var(--ink)}
+.tb.no.on{background:var(--bad);border-color:var(--bad);color:var(--on-color);box-shadow:0 3px 0 var(--ink)}
+
+/* score */
+.sc{display:grid;gap:12px}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:end}
+.srow .nm{display:flex;align-items:center;gap:6px;font-weight:700;min-width:0}
+.srow .nm i{width:12px;height:12px;border-radius:50%;background:var(--pc);flex:none}
+.srow .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .big{font-family:var(--f-display);font-size:1.7rem;line-height:1;font-variant-numeric:tabular-nums;text-align:right}
+.srow .big small{font-size:.9rem;color:var(--muted)}
+.srow .meta{grid-column:1/-1;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{grid-column:1/-1;height:10px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--pc);border-radius:999px}
+
+/* battle ticket */
+.ticket{position:relative;background:var(--surface);border:2px solid var(--line);border-radius:var(--r);box-shadow:0 4px 0 var(--line);padding:16px 20px;min-width:0}
+.ticket::before,.ticket::after{content:"";position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:var(--bg);border:2px solid var(--line);transform:translateY(-50%)}
+.ticket::before{left:-11px;clip-path:inset(0 0 0 50%)}
+.ticket::after{right:-11px;clip-path:inset(0 50% 0 0)}
+.vs{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0 6px}
+.vs .side{display:flex;flex-direction:column;align-items:center;min-width:64px}
+.vs .side b{font-family:var(--f-display);font-weight:400;font-size:2rem;line-height:1;color:var(--pc);font-variant-numeric:tabular-nums}
+.vs .side span{font-size:.82rem;max-width:7em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vs .side.lead span::after{content:" ★";color:var(--coin)}
+.vs .x{font-family:var(--f-display);color:var(--muted)}
+.verdict{text-align:center;font-weight:700;margin:0}
+.stake{margin-top:12px;border-top:2px dashed var(--line);padding-top:10px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.stake .k{font-size:.75rem;letter-spacing:.08em;color:var(--coin-ink);background:var(--coin);border-radius:6px;padding:1px 7px;font-weight:700}
+.stake .v{font-weight:700;overflow-wrap:anywhere;min-width:0}
+.stake .v.empty{color:var(--muted);font-weight:400}
+.hist{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:4px;font-size:.84rem}
+.hist li{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-variant-numeric:tabular-nums}
+.hist li b{color:var(--ink);font-weight:700;text-align:right;overflow-wrap:anywhere}
+.tally{font-size:.84rem;margin-top:8px;color:var(--ink);font-weight:700}
+
+/* rules receipt */
+.receipt{position:relative;background:var(--surface);border:2px solid var(--line);border-bottom:0;border-radius:var(--r) var(--r) 0 0;padding:16px 16px 6px;margin-bottom:12px}
+.receipt::after{content:"";position:absolute;left:-2px;right:-2px;bottom:-12px;height:12px;
+  background:linear-gradient(-45deg,transparent 8px,var(--surface) 0),linear-gradient(45deg,transparent 8px,var(--surface) 0);
+  background-size:16px 16px;background-repeat:repeat-x;background-position:left top}
+.receipt h2{font-family:var(--f-display);font-weight:400;font-size:1.25rem;margin:0;text-align:center}
+.receipt .sub{text-align:center;font-size:.75rem;color:var(--muted);letter-spacing:.12em;border-bottom:2px dashed var(--line);padding-bottom:8px;margin-bottom:8px}
+.receipt textarea{width:100%;min-height:150px;resize:vertical;border:0;background:transparent;line-height:1.9;
+  background-image:repeating-linear-gradient(transparent 0 calc(1.9em - 1px),var(--line) calc(1.9em - 1px) 1.9em);background-attachment:local;padding:0 2px}
+.receipt textarea:focus-visible{outline:none}
+.receipt .foot{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);padding:6px 0 4px}
+
+/* dialogs */
+.ov{position:fixed;inset:0;background:rgba(20,18,45,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50;
+  padding:16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))}
+@media (min-width:600px){.ov{align-items:center}}
+.sheet{background:var(--surface);border:2px solid var(--line);border-radius:22px;box-shadow:0 6px 0 var(--line);width:min(520px,100%);max-height:calc(100% - 8px);overflow:auto;padding:18px}
+.sheet h3{font-family:var(--f-display);font-weight:400;font-size:1.35rem;margin:0}
+.sheet .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.x-btn{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--surface);font-weight:700}
+.drow{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:2px dashed var(--line)}
+.drow .who b i{background:var(--pc)}
+.note{font-size:.84rem;color:var(--muted);margin:6px 0 0}
+fieldset{border:0;padding:0;margin:0 0 16px}
+legend{font-family:var(--f-display);font-size:1.05rem;margin-bottom:8px;padding:0}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-size:.82rem;color:var(--muted);font-weight:700}
+.inp{border:2px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--surface);width:100%;min-width:0}
+.pcard{border:2px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px;display:grid;gap:10px}
+.prow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.prow .inp{flex:1 1 140px}
+.colors{display:flex;gap:6px}
+.colors button{width:26px;height:26px;border-radius:50%;border:3px solid var(--surface);background:var(--pc);box-shadow:0 0 0 2px var(--line)}
+.colors button[aria-pressed="true"]{box-shadow:0 0 0 3px var(--ink)}
+.days{display:flex;gap:4px;flex-wrap:wrap}
+.days button{width:36px;height:36px;border-radius:50%;border:2px solid var(--line);background:var(--surface);font-weight:700}
+.days button[aria-pressed="true"]{background:var(--pc);border-color:var(--pc);color:var(--on-color)}
+.stepper{display:inline-flex;align-items:center;gap:8px}
+.stepper button{width:32px;height:32px;border-radius:50%;border:2px solid var(--line);background:var(--surface);font-weight:700}
+.stepper b{font-family:var(--f-display);font-weight:400;font-size:1.2rem;min-width:3.2em;text-align:center}
+.link{border:0;background:none;color:var(--bad);font-weight:700;padding:4px}
+.add{width:100%;border:2px dashed var(--line);background:transparent;border-radius:14px;padding:10px;font-weight:700;color:var(--muted)}
+.switch{display:flex;align-items:center;gap:10px;font-weight:700}
+.switch button{width:52px;height:30px;border-radius:999px;border:2px solid var(--line);background:var(--surface-2);position:relative;flex:none}
+.switch button::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:left .15s}
+.switch button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink)}
+.switch button[aria-pressed="true"]::after{left:25px;background:var(--coin)}
+/* landing (no room in the link yet) */
+.landing{max-width:520px;margin:6vh auto 0;display:grid;gap:16px;text-align:center}
+.landing svg{width:96px;height:96px;margin:0 auto}
+.landing h1{font-family:var(--f-display);font-weight:400;font-size:2.2rem;margin:0}
+.landing p{margin:0;color:var(--muted)}
+.landing .btn{font-size:1.05rem;padding:12px 22px}
+.recent{text-align:left}
+.recent h2{font-family:var(--f-display);font-weight:400;font-size:1.1rem;margin:0 0 8px}
+.recent a{display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border:2px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);text-decoration:none;margin-bottom:6px}
+.recent a small{color:var(--muted)}
+.invite{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:space-between;background:var(--coin);color:var(--coin-ink);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-weight:700}
+.invite button{border:2px solid var(--coin-ink);background:transparent;color:var(--coin-ink);border-radius:999px;padding:5px 12px;font-weight:700}
+.linkbox{width:100%;font-size:.8rem;border:2px solid var(--line);border-radius:10px;padding:6px 8px;background:var(--surface);color:var(--ink)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;z-index:60;max-width:calc(100% - 32px);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="landing" hidden>
+  <div class="landing">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <ellipse cx="32" cy="38" rx="24" ry="19" fill="var(--pink)"/>
+      <path d="M17 24 L14 12 L26 20 Z" fill="var(--pink)"/>
+      <rect x="26" y="20" width="12" height="3.5" rx="1.75" fill="var(--ink)"/>
+      <ellipse cx="52" cy="40" rx="7" ry="6" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>
+      <circle cx="50" cy="40" r="1.4" fill="var(--ink)"/><circle cx="54.5" cy="40" r="1.4" fill="var(--ink)"/>
+      <circle cx="41" cy="33" r="2.3" fill="var(--ink)"/>
+      <rect x="18" y="52" width="7" height="8" rx="3" fill="var(--pink)"/><rect x="38" y="52" width="7" height="8" rx="3" fill="var(--pink)"/>
+      <circle cx="32" cy="8" r="6.5" fill="var(--coin)" stroke="var(--coin-ink)" stroke-width="1.5"/>
+    </svg>
+    <h1>우리 0원 챌린지</h1>
+    <p id="landing-msg">친구랑 같이 하는 무지출 챌린지예요. 챌린지를 만들면 우리만 들어올 수 있는 비밀 링크가 생겨요.</p>
+    <div><button class="btn primary" id="btn-create">새 챌린지 만들기</button></div>
+    <div class="recent" id="recent" hidden><h2>최근에 연 챌린지</h2><div id="recent-list"></div></div>
+  </div>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="invite" id="invite">
+    <span>이 링크를 친구한테 보내면 같이 기록할 수 있어요. 링크를 아는 사람만 들어올 수 있어요.</span>
+    <button data-act="copy-link">초대 링크 복사</button>
+    <input class="linkbox" id="linkbox" readonly aria-label="초대 링크" hidden>
+  </div>
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <ellipse cx="32" cy="38" rx="24" ry="19" fill="var(--pink)"/>
+        <path d="M17 24 L14 12 L26 20 Z" fill="var(--pink)"/>
+        <rect x="26" y="20" width="12" height="3.5" rx="1.75" fill="var(--ink)"/>
+        <ellipse cx="52" cy="40" rx="7" ry="6" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>
+        <circle cx="50" cy="40" r="1.4" fill="var(--ink)"/><circle cx="54.5" cy="40" r="1.4" fill="var(--ink)"/>
+        <circle cx="41" cy="33" r="2.3" fill="var(--ink)"/>
+        <rect x="18" y="52" width="7" height="8" rx="3" fill="var(--pink)"/><rect x="38" y="52" width="7" height="8" rx="3" fill="var(--pink)"/>
+        <circle cx="32" cy="8" r="6.5" fill="var(--coin)" stroke="var(--coin-ink)" stroke-width="1.5"/>
+        <text x="32" y="11.3" text-anchor="middle" font-size="9" font-family="Jua, sans-serif" fill="var(--coin-ink)">0</text>
+      </svg>
+      <div style="min-width:0">
+        <h1 id="title">우리 0원 챌린지</h1>
+        <div class="status" id="status" data-s="wait"><i></i><span>연결하는 중…</span></div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn" data-act="copy-link">초대 링크</button>
+      <button class="btn primary" data-act="open-settings" id="btn-settings">챌린지 설정</button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card a-today" id="today-card" aria-label="오늘 기록"></section>
+
+    <section class="card a-cal" aria-label="달력">
+      <div class="card-head">
+        <div class="nav">
+          <button class="ic" data-act="prev" aria-label="이전">‹</button>
+          <span class="lbl" id="range-lbl"></span>
+          <button class="ic" data-act="next" aria-label="다음">›</button>
+          <button class="td" data-act="go-today">오늘</button>
+        </div>
+        <div class="seg" role="group" aria-label="보기 방식">
+          <button data-act="view" data-v="week" id="v-week">주간</button>
+          <button data-act="view" data-v="month" id="v-month">월간</button>
+        </div>
+      </div>
+      <div id="cal"></div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <section class="card a-score" id="score-card" aria-label="성적"></section>
+
+    <section class="ticket a-battle" id="battle-card" aria-label="승부모드"></section>
+
+    <section class="a-rules">
+      <div class="receipt">
+        <h2>둘만의 규칙</h2>
+        <div class="sub">NO-SPEND RULES · 0원</div>
+        <textarea id="rules" aria-label="둘만의 규칙" placeholder="예)&#10;교통비·공과금·저축은 지출로 안 쳐요&#10;선물받은 커피는 성공으로 인정&#10;실패한 사람이 주말 디저트 사기&#10;매일 밤 11시 전에 기록하기"></textarea>
+        <div class="foot"><span id="rules-state">자동 저장돼요</span><span id="rules-count">0 / 2000</span></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="ov" id="ov" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script type="module">
+/* ====== Firebase 설정: Firebase 콘솔 > 프로젝트 설정 > 내 앱 > SDK 설정에 나오는 값으로 바꿔주세요 ====== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCbdb4-ZOvEvUeqEE5QW_V3YH6oNhkqwK8",
+  authDomain: "becoming-rich-f7b0a.firebaseapp.com",
+  projectId: "becoming-rich-f7b0a",
+  storageBucket: "becoming-rich-f7b0a.firebasestorage.app",
+  messagingSenderId: "1081957020352",
+  appId: "1:1081957020352:web:0d75792cc9014b896b3325"
+};
+/* ================================================================================================ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc as fsDoc, collection as fsCol, setDoc, onSnapshot as fsSnap } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+(function(){
+"use strict";
+const DOW = ["월","화","수","목","금","토","일"];
+const COLORS = {pink:"var(--pink)",blue:"var(--blue)",orange:"var(--orange)",purple:"var(--purple)"};
+const DEFAULT = {
+  title:"우리 0원 챌린지",
+  rules:"",
+  participants:[
+    {id:"pA",name:"나",color:"pink",goal:{type:"count",n:2}},
+    {id:"pB",name:"친구",color:"blue",goal:{type:"days",days:[2,5]}}
+  ],
+  battle:{on:true,period:"week",basis:"count",stake:""}
+};
+const ROOM_RE = /^[A-Za-z0-9]{20,40}$/;
+const roomId = (location.hash || "").replace(/^#/, "");
+const SETTINGS_PATH = "rooms/" + roomId;
+const RECORDS_PATH = SETTINGS_PATH + "/records";
+const LS_KEY = "zero-won-challenge:" + roomId;
+
+const clone = o => JSON.parse(JSON.stringify(o));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+
+/* ---------- dates (weeks start on Monday) ---------- */
+const pad = n => String(n).padStart(2,"0");
+const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parseYmd = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const addDays = (d,n) => { const x = new Date(d.getFullYear(),d.getMonth(),d.getDate()); x.setDate(x.getDate()+n); return x; };
+const wd = d => (d.getDay()+6)%7;
+const startOfWeek = d => addDays(d,-wd(d));
+const today = () => { const n = new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); };
+const md = d => (d.getMonth()+1)+"/"+d.getDate();
+function range(period, anchor){
+  if (period === "week"){ const s = startOfWeek(anchor); return [s, addDays(s,6)]; }
+  return [new Date(anchor.getFullYear(),anchor.getMonth(),1), new Date(anchor.getFullYear(),anchor.getMonth()+1,0)];
+}
+function eachDay(s,e,fn){ for (let d = new Date(s); d <= e; d = addDays(d,1)) fn(d); }
+
+/* ---------- state ---------- */
+let settings = clone(DEFAULT);
+let recDocs = {};      // "pid_YYYY-MM" -> {pid, ym, days:{DD:"s"|"f"}}
+let recs = {};         // pid -> {"YYYY-MM-DD": "s"|"f"}
+let mode = "wait";     // wait | db | local
+let db = null;
+let readOnly = false;
+let lastPop = null;
+const ui = { view: lsGet(LS_KEY+":view") === "week" ? "week" : "month", anchor: today(), dialog: null, dayDate: null, confirmDel: null };
+
+function sanGoal(g){
+  if (!g || typeof g !== "object") return {type:"daily"};
+  if (g.type === "days") return {type:"days", days: Array.isArray(g.days) ? [...new Set(g.days.filter(x => Number.isInteger(x) && x>=0 && x<7))].sort() : []};
+  if (g.type === "count") { const n = Number(g.n); return {type:"count", n: Number.isFinite(n) ? Math.min(7,Math.max(1,Math.round(n))) : 1}; }
+  return {type:"daily"};
+}
+function sanitize(d){
+  const s = clone(DEFAULT);
+  if (!d || typeof d !== "object") return s;
+  if (typeof d.title === "string") s.title = d.title.slice(0,40);
+  if (typeof d.rules === "string") s.rules = d.rules.slice(0,2000);
+  if (Array.isArray(d.participants)){
+    const ps = d.participants.filter(p => p && typeof p.id === "string" && /^[A-Za-z0-9]{1,20}$/.test(p.id)).slice(0,4)
+      .map(p => ({id:p.id, name: typeof p.name === "string" ? p.name.slice(0,12) : "", color: COLORS[p.color] ? p.color : "pink", goal: sanGoal(p.goal)}));
+    if (ps.length) s.participants = ps;
+  }
+  if (d.battle && typeof d.battle === "object"){
+    s.battle = {on: !!d.battle.on, period: d.battle.period === "month" ? "month" : "week",
+      basis: d.battle.basis === "rate" ? "rate" : "count", stake: typeof d.battle.stake === "string" ? d.battle.stake.slice(0,40) : ""};
+  }
+  return s;
+}
+function sanRec(b){
+  if (!b || typeof b.pid !== "string" || typeof b.ym !== "string" || !/^\d{4}-\d{2}$/.test(b.ym)) return null;
+  const days = {};
+  if (b.days && typeof b.days === "object") for (const k in b.days) if (/^\d{2}$/.test(k) && (b.days[k] === "s" || b.days[k] === "f")) days[k] = b.days[k];
+  return {pid:b.pid, ym:b.ym, days};
+}
+function rebuildRecs(){
+  recs = {};
+  for (const id in recDocs){ const b = recDocs[id]; if (!b) continue;
+    const m = recs[b.pid] || (recs[b.pid] = {});
+    for (const dd in b.days) m[b.ym+"-"+dd] = b.days[dd];
+  }
+}
+const pname = p => p.name || "이름 없음";
+const recOf = (pid, ds) => (recs[pid] || {})[ds] || null;
+
+/* ---------- goals & scores ---------- */
+function isTarget(p,d){ const g = p.goal; if (g.type === "daily") return true; if (g.type === "days") return g.days.includes(wd(d)); return false; }
+function targetCount(p,s,e){
+  let days = 0, match = 0; eachDay(s,e,d => { days++; if (isTarget(p,d)) match++; });
+  if (p.goal.type === "count") return Math.max(1, Math.round(p.goal.n*days/7));
+  return match;
+}
+function goalLabel(p){
+  const g = p.goal;
+  if (g.type === "daily") return "매일 무지출";
+  if (g.type === "count") return "주 "+g.n+"일 무지출";
+  return g.days.length ? "매주 "+g.days.map(i => DOW[i]).join("·")+"요일" : "요일을 골라주세요";
+}
+function score(p,s,e){
+  let succ = 0, fail = 0;
+  eachDay(s,e,d => { const v = recOf(p.id, ymd(d)); if (v === "s") succ++; else if (v === "f") fail++; });
+  const target = targetCount(p,s,e);
+  return {succ, fail, target, rate: target ? Math.min(100, Math.round(succ/target*100)) : 0};
+}
+/* streak: daily = consecutive days, days = consecutive target days, count = consecutive weeks that hit the goal.
+   Today's unrecorded target day (or this week, not yet reached) is "pending" and never breaks the run. */
+function streakInfo(p){
+  const t = today(), tds = ymd(t), earliest = earliestRecord(), g = p.goal;
+  const res = {cur:0, best:0, pending:false};
+  if (!earliest || (g.type === "days" && !g.days.length)) return res;
+  const units = [];
+  if (g.type === "count"){
+    for (let s = startOfWeek(earliest); s <= t; s = addDays(s,7)){
+      const e = addDays(s,6), sc = score(p,s,e);
+      units.push(sc.succ >= g.n ? "ok" : e >= t ? "pending" : "miss");
+    }
+  } else {
+    eachDay(earliest, t, d => {
+      if (!isTarget(p,d)) return;
+      const ds = ymd(d), v = recOf(p.id, ds);
+      units.push(v === "s" ? "ok" : (ds === tds && !v) ? "pending" : "miss");
+    });
+  }
+  let run = 0;
+  for (const u of units){ if (u === "ok"){ run++; if (run > res.best) res.best = run; } else if (u === "miss") run = 0; }
+  res.cur = run; res.pending = units[units.length-1] === "pending";
+  return res;
+}
+function streakText(p, n){
+  if (p.goal.type === "daily") return n+"일 연속";
+  if (p.goal.type === "days") return "목표일 "+n+"번 연속";
+  return n+"주 연속";
+}
+const FLAME = '<svg viewBox="0 0 12 14" aria-hidden="true"><path d="M6 0C6.6 3 10 4.6 10 8.6A4 4 0 0 1 2 8.6C2 6.6 3.2 5.6 3.8 4.4 4.3 6 5.2 6.4 5.6 6.4 5.2 4.2 5.4 2 6 0Z" fill="var(--bad)"/></svg>';
+
+function periodResult(s,e){
+  const basis = settings.battle.basis;
+  const rows = settings.participants.map(p => { const sc = score(p,s,e); return {p, sc, val: basis === "rate" ? sc.rate : sc.succ}; });
+  const any = rows.some(r => r.sc.succ + r.sc.fail > 0);
+  const max = Math.max(...rows.map(r => r.val));
+  const leaders = rows.filter(r => r.val === max);
+  return {rows, any, leaders, tie: leaders.length === rows.length || leaders.length > 1};
+}
+function earliestRecord(){
+  let min = null;
+  for (const pid in recs) for (const ds in recs[pid]) if (!min || ds < min) min = ds;
+  return min ? parseYmd(min) : null;
+}
+
+/* ---------- writes ---------- */
+const pending = {}, writing = {}, retried = new WeakSet();
+let settingsTimer = null;
+function queueWrite(path, body){ pending[path] = body; if (!writing[path]) flush(path); }
+async function flush(path){
+  writing[path] = true;
+  while (pending[path] !== undefined){
+    const body = pending[path]; delete pending[path];
+    try {
+      if (mode === "db") await db.doc(path).set(body);
+      else persistLocal();
+    } catch(e){ await onWriteError(e, path, body); }
+  }
+  writing[path] = false;
+  if (mode === "db") setStatus(readOnly ? "ro" : "live");
+}
+async function onWriteError(e, path, body){
+  const code = e && e.code;
+  if (code === "unavailable" && !retried.has(body)){
+    await new Promise(r => setTimeout(r, 600 + Math.random()*900));
+    if (pending[path] === undefined){ retried.add(body); pending[path] = body; }
+    return;
+  }
+  if (code === "permission-denied"){ toast("저장이 거부됐어요. Firebase 보안 규칙이 제대로 들어갔는지 확인해 주세요."); return; }
+  if (code === "resource-exhausted"){ toast("오늘 무료 사용량을 다 썼어요. 내일 다시 저장돼요."); return; }
+  toast("저장하지 못했어요. 잠시 뒤 다시 눌러주세요.");
+}
+function persistLocal(){ lsSet(LS_KEY+":state", JSON.stringify({settings, recDocs})); }
+function saveSettings(){
+  if (readOnly) return;
+  clearTimeout(settingsTimer);
+  settingsTimer = setTimeout(() => { settingsTimer = null; const b = clone(settings); queueWrite(SETTINGS_PATH, b); }, 600);
+}
+const settingsBusy = () => settingsTimer !== null || writing[SETTINGS_PATH] || pending[SETTINGS_PATH] !== undefined;
+
+function setRecord(pid, ds, val){
+  if (readOnly || parseYmd(ds) > today()) return;
+  const ym = ds.slice(0,7), dd = ds.slice(8), id = pid+"_"+ym;
+  const body = clone(recDocs[id] || {pid, ym, days:{}});
+  if (val) body.days[dd] = val; else delete body.days[dd];
+  recDocs[id] = body; rebuildRecs();
+  lastPop = val ? pid+"|"+ds : null;
+  renderAll();
+  queueWrite(RECORDS_PATH+"/"+id, body);
+}
+
+/* ---------- rendering ---------- */
+const $ = id => document.getElementById(id);
+const pc = p => 'style="--pc:'+COLORS[p.color]+'"';
+const dis = () => readOnly ? " disabled" : "";
+
+function viewRange(){ return range(ui.view, ui.anchor); }
+function stampHtml(p, d){
+  const ds = ymd(d), v = recOf(p.id, ds);
+  const cls = v === "s" ? "s" : v === "f" ? "f" : (isTarget(p,d) ? "t" : "n");
+  const label = pname(p)+": "+(v === "s" ? "0원 성공" : v === "f" ? "돈 씀" : isTarget(p,d) ? "목표일" : "기록 없음");
+  const pop = lastPop === p.id+"|"+ds ? " pop" : "";
+  return '<i class="stamp '+cls+pop+'" '+pc(p)+' title="'+esc(label)+'"></i>';
+}
+
+function renderCal(){
+  const [s,e] = viewRange(), t = today(), tds = ymd(t);
+  $("v-week").setAttribute("aria-pressed", ui.view === "week");
+  $("v-month").setAttribute("aria-pressed", ui.view === "month");
+  $("range-lbl").textContent = ui.view === "month" ? s.getFullYear()+"년 "+(s.getMonth()+1)+"월" : md(s)+" – "+md(e);
+  const ps = settings.participants;
+  let html = "";
+  if (ui.view === "month"){
+    html += '<div class="dow">'+DOW.map(x => "<span>"+x+"</span>").join("")+"</div><div class=\"month\">";
+    const gs = startOfWeek(s), ge = addDays(startOfWeek(e),6);
+    eachDay(gs, ge, d => {
+      const ds = ymd(d);
+      const cls = ["cell", d.getMonth() !== s.getMonth() ? "out" : "", ds === tds ? "today" : "", d > t ? "future" : ""].join(" ");
+      html += '<button class="'+cls+'" data-act="day" data-date="'+ds+'" aria-label="'+(d.getMonth()+1)+"월 "+d.getDate()+"일 기록 보기\">"
+        + '<span class="dn">'+d.getDate()+'</span><span class="stamps">'+(d > t ? "" : ps.map(p => stampHtml(p,d)).join(""))+"</span></button>";
+    });
+    html += "</div>";
+  } else {
+    html += '<div class="week">';
+    eachDay(s, e, d => {
+      const ds = ymd(d), fut = d > t;
+      html += '<div class="wrow'+(ds === tds ? " today" : "")+(fut ? " future" : "")+'"><div class="wday"><b>'+d.getDate()+"</b><span>"+DOW[wd(d)]+"</span></div><div class=\"wcells\">";
+      ps.forEach(p => {
+        const v = recOf(p.id, ds);
+        const txt = v === "s" ? "0원 성공" : v === "f" ? "돈 씀" : isTarget(p,d) ? "목표일" : "—";
+        html += '<button class="wpill'+(v ? " is-"+v : "")+'" '+pc(p)+' data-act="cycle" data-pid="'+p.id+'" data-date="'+ds+'"'+(fut || readOnly ? " disabled" : "")
+          + ' aria-label="'+esc(pname(p))+" "+txt+', 눌러서 바꾸기">'+stampHtml(p,d)+"<b>"+esc(pname(p))+"</b><em>"+txt+"</em></button>";
+      });
+      html += "</div></div>";
+    });
+    html += "</div>";
+  }
+  $("cal").innerHTML = html;
+  $("legend").innerHTML =
+    '<span><i class="stamp s" style="--pc:var(--muted)"></i>0원 성공</span>'
+    + '<span><i class="stamp f"></i>돈 씀</span>'
+    + '<span><i class="stamp t" style="--pc:var(--muted)"></i>목표일</span>'
+    + ps.map(p => '<span '+pc(p)+'><i class="sw"></i>'+esc(pname(p))+"</span>").join("")
+    + (ui.view === "week" ? '<span>· 칸을 누를 때마다 성공 → 돈 씀 → 비움 순으로 바뀌어요</span>' : '<span>· 날짜를 누르면 기록할 수 있어요</span>');
+}
+
+function renderToday(){
+  const t = today(), ds = ymd(t), [ws,we] = range("week", t);
+  let html = '<div class="card-head"><div><div class="eyebrow">TODAY</div><h2>'+(t.getMonth()+1)+"월 "+t.getDate()+"일 "+DOW[wd(t)]+"요일</h2></div></div>";
+  settings.participants.forEach(p => {
+    const v = recOf(p.id, ds);
+    let sub;
+    if (p.goal.type === "count"){ const sc = score(p, ws, we); sub = "이번 주 "+sc.succ+" / "+p.goal.n+"일 성공"; }
+    else sub = (isTarget(p,t) ? "오늘은 목표일" : "오늘은 자유일")+" · "+goalLabel(p);
+    const st = streakInfo(p);
+    let hint = "";
+    if (st.pending && p.goal.type === "count"){
+      const need = p.goal.n - score(p, ws, we).succ;
+      const left = Math.round((we - t)/864e5) + (v ? 0 : 1);
+      hint = need <= left ? need+"일 더 성공하면 "+streakText(p, st.cur+1)+"!" : (st.best ? "최고 기록 "+streakText(p, st.best) : "");
+    }
+    else if (st.pending) hint = "오늘 성공하면 "+streakText(p, st.cur+1)+"!";
+    else if (st.cur > 0 && st.cur === st.best) hint = "최고 기록 갱신 중!";
+    else if (st.best > 0) hint = "최고 기록 "+streakText(p, st.best);
+    html += '<div class="trow" '+pc(p)+'><div class="who"><b><i></i>'+esc(pname(p))
+      + (st.cur > 0 ? '<span class="streak">'+FLAME+streakText(p, st.cur)+"</span>" : "")
+      + "</b><small>"+esc(sub)+"</small>"+(hint ? '<small class="hint">'+esc(hint)+"</small>" : "")+'</div><div class="tbtns">'
+      + '<button class="tb ok'+(v === "s" ? " on" : "")+'" data-act="set" data-pid="'+p.id+'" data-date="'+ds+'" data-val="s" aria-pressed="'+(v === "s")+'"'+dis()+">0원 성공</button>"
+      + '<button class="tb no'+(v === "f" ? " on" : "")+'" data-act="set" data-pid="'+p.id+'" data-date="'+ds+'" data-val="f" aria-pressed="'+(v === "f")+'"'+dis()+">돈 썼어요</button></div></div>";
+  });
+  $("today-card").innerHTML = html;
+}
+
+function renderScore(){
+  const [s,e] = viewRange();
+  const lbl = ui.view === "month" ? (s.getMonth()+1)+"월 성적" : md(s)+" – "+md(e)+" 성적";
+  let html = '<div class="card-head"><div><div class="eyebrow">'+(ui.view === "month" ? "MONTHLY" : "WEEKLY")+"</div><h2>"+lbl+'</h2></div></div><div class="sc">';
+  settings.participants.forEach(p => {
+    const sc = score(p,s,e), st = streakInfo(p);
+    html += '<div class="srow" '+pc(p)+'><div class="nm"><i></i><span>'+esc(pname(p))+'</span></div><div class="big">'+sc.succ+"<small>일</small></div>"
+      + '<div class="bar" role="img" aria-label="달성률 '+sc.rate+'%"><span style="width:'+sc.rate+'%"></span></div>'
+      + '<div class="meta">목표 '+sc.target+"일 · 달성률 "+sc.rate+"% · 돈 쓴 날 "+sc.fail+"일</div>"
+      + '<div class="meta">지금 '+streakText(p, st.cur)+" · 최고 기록 "+streakText(p, st.best)+"</div></div>";
+  });
+  $("score-card").innerHTML = html+"</div>";
+}
+
+function renderBattle(){
+  const b = settings.battle, el = $("battle-card");
+  if (!b.on){
+    el.innerHTML = '<div class="card-head"><div><div class="eyebrow">BATTLE</div><h2>승부모드 꺼짐</h2></div></div>'
+      + '<p class="note">켜면 주간이나 월간 성공 합계로 승패를 가려요. 상품이나 벌칙도 걸 수 있어요.</p>'
+      + '<div style="margin-top:12px"><button class="btn" data-act="battle-quick-on"'+dis()+">승부모드 켜기</button></div>";
+    return;
+  }
+  const t = today(), [cs,ce] = range(b.period, t), cur = periodResult(cs,ce);
+  const unit = b.basis === "rate" ? "%" : "일";
+  const head = (b.period === "week" ? "이번 주 승부" : (cs.getMonth()+1)+"월 승부");
+  let html = '<div class="card-head"><div><div class="eyebrow">BATTLE · '+md(cs)+" – "+md(ce)+"</div><h2>"+head+'</h2></div><span class="eyebrow">'+(b.basis === "rate" ? "달성률 기준" : "성공 일수 기준")+"</span></div>";
+  html += '<div class="vs">' + cur.rows.map((r,i) =>
+      (i ? '<span class="x">vs</span>' : "") + '<div class="side'+(!cur.tie && cur.leaders.includes(r) && cur.any ? " lead" : "")+'" '+pc(r.p)+"><b>"+r.val+'<small style="font-size:.9rem">'+unit+"</small></b><span>"+esc(pname(r.p))+"</span></div>"
+    ).join("") + "</div>";
+  let verdict;
+  if (!cur.any) verdict = "아직 기록이 없어요. 오늘부터 시작!";
+  else if (cur.tie) verdict = "지금은 동점이에요";
+  else {
+    const sorted = cur.rows.map(r => r.val).sort((a,b) => b-a);
+    verdict = pname(cur.leaders[0].p)+" 님이 "+(sorted[0]-sorted[1])+unit+" 앞서는 중";
+  }
+  html += '<p class="verdict">'+esc(verdict)+"</p>";
+  html += '<div class="stake"><span class="k">걸린 것</span>'+(b.stake ? '<span class="v">'+esc(b.stake)+"</span>" : '<span class="v empty">설정에서 상품이나 벌칙을 정해보세요</span>')+"</div>";
+
+  // history and overall record
+  const earliest = earliestRecord(), hist = [], wins = {}; let ties = 0;
+  if (earliest){
+    let anchor = addDays(cs,-1);
+    for (let i = 0; i < 104; i++){
+      const [s,e] = range(b.period, anchor);
+      if (e < earliest) break;
+      const r = periodResult(s,e);
+      if (r.any){
+        if (r.tie) ties++; else wins[r.leaders[0].p.id] = (wins[r.leaders[0].p.id] || 0) + 1;
+        if (hist.length < 5) hist.push({s,e,r});
+      }
+      anchor = addDays(s,-1);
+    }
+  }
+  if (hist.length){
+    html += '<ul class="hist">'+hist.map(h => {
+      const res = h.r.tie ? "무승부" : pname(h.r.leaders[0].p)+" 승";
+      const nums = h.r.rows.map(r => r.val+unit).join(" : ");
+      const when = b.period === "week" ? md(h.s)+" – "+md(h.e) : h.s.getFullYear()+"년 "+(h.s.getMonth()+1)+"월";
+      return "<li><span>"+when+"</span><b>"+esc(res)+" ("+nums+")</b></li>";
+    }).join("")+"</ul>";
+    html += '<div class="tally">누적 전적 · '+esc(settings.participants.map(p => pname(p)+" "+(wins[p.id] || 0)+"승").join(" · ")+(ties ? " · 무승부 "+ties : ""))+"</div>";
+  }
+  el.innerHTML = html;
+}
+
+function syncRules(force){
+  const ta = $("rules");
+  if (force || (document.activeElement !== ta && !rulesTimer)) ta.value = settings.rules;
+  ta.disabled = readOnly;
+  $("rules-count").textContent = ta.value.length+" / 2000";
+}
+
+function renderAll(){
+  $("title").textContent = settings.title || "우리 0원 챌린지";
+  renderToday(); renderCal(); renderScore(); renderBattle(); syncRules(false);
+  $("btn-settings").disabled = readOnly;
+  if (ui.dialog === "day") renderDayDialog();
+  const ae = document.activeElement;
+  if (ui.dialog === "settings" && !(ae && $("sheet").contains(ae) && ae.matches("input,textarea"))) renderSettings();
+  lastPop = null;
+}
+
+/* ---------- dialogs ---------- */
+function openDialog(kind){ ui.dialog = kind; $("ov").hidden = false; if (kind === "day") renderDayDialog(); else renderSettings(); setTimeout(() => { const f = $("sheet").querySelector("button,input"); if (f) f.focus(); }, 0); }
+function closeDialog(){ ui.dialog = null; ui.confirmDel = null; $("ov").hidden = true; }
+
+function renderDayDialog(){
+  const d = parseYmd(ui.dayDate), fut = d > today();
+  let html = '<div class="hd"><h3>'+(d.getMonth()+1)+"월 "+d.getDate()+"일 "+DOW[wd(d)]+'요일</h3><button class="x-btn" data-act="close" aria-label="닫기">×</button></div>';
+  if (fut) html += '<p class="note">아직 오지 않은 날이에요. 그날이 되면 기록할 수 있어요.</p>';
+  settings.participants.forEach(p => {
+    const v = recOf(p.id, ui.dayDate), dd = fut || readOnly ? " disabled" : "";
+    html += '<div class="drow" '+pc(p)+'><div class="who"><b><i></i>'+esc(pname(p))+"</b><small>"+(isTarget(p,d) ? "목표일" : "자유일")+'</small></div><div class="seg" role="group">'
+      + ["s","f",""].map(val => '<button data-act="dlg-set" data-pid="'+p.id+'" data-val="'+val+'" aria-pressed="'+((v || "") === val)+'"'+dd+">"+(val === "s" ? "0원 성공" : val === "f" ? "돈 씀" : "비우기")+"</button>").join("")
+      + "</div></div>";
+  });
+  $("sheet").innerHTML = html;
+  $("sheet").setAttribute("aria-label", "날짜 기록");
+}
+
+function renderSettings(){
+  const s = settings, b = s.battle;
+  let html = '<div class="hd"><h3>챌린지 설정</h3><button class="x-btn" data-act="close" aria-label="닫기">×</button></div>';
+  html += '<fieldset><div class="field"><label for="f-title">챌린지 이름</label><input class="inp" id="f-title" data-field="title" maxlength="40" value="'+esc(s.title)+'"></div></fieldset>';
+  html += "<fieldset><legend>참가자와 목표</legend>";
+  s.participants.forEach(p => {
+    const g = p.goal;
+    html += '<div class="pcard" '+pc(p)+'><div class="prow"><input class="inp" id="f-name-'+p.id+'" data-field="pname" data-pid="'+p.id+'" maxlength="12" aria-label="이름" placeholder="이름" value="'+esc(p.name)+'">'
+      + '<div class="colors" role="group" aria-label="색">'+Object.keys(COLORS).map(c => '<button data-act="p-color" data-pid="'+p.id+'" data-c="'+c+'" style="--pc:'+COLORS[c]+'" aria-pressed="'+(p.color === c)+'" aria-label="'+c+'"></button>').join("")+"</div>"
+      + (s.participants.length > 2 ? '<button class="link" data-act="p-del" data-pid="'+p.id+'">'+(ui.confirmDel === p.id ? "정말 뺄까요?" : "빼기")+"</button>" : "")
+      + "</div>"
+      + '<div class="seg" role="group" aria-label="목표 방식">'
+      + [["daily","매일"],["days","요일 지정"],["count","주 N일"]].map(([k,l]) => '<button data-act="p-goal" data-pid="'+p.id+'" data-g="'+k+'" aria-pressed="'+(g.type === k)+'">'+l+"</button>").join("") + "</div>";
+    if (g.type === "days") html += '<div class="days" role="group" aria-label="무지출 요일">'+DOW.map((x,i) => '<button data-act="p-day" data-pid="'+p.id+'" data-i="'+i+'" aria-pressed="'+g.days.includes(i)+'">'+x+"</button>").join("")+"</div>";
+    if (g.type === "count") html += '<div class="stepper"><button data-act="p-n" data-pid="'+p.id+'" data-d="-1" aria-label="하루 줄이기">−</button><b>주 '+g.n+'일</b><button data-act="p-n" data-pid="'+p.id+'" data-d="1" aria-label="하루 늘리기">+</button><span class="note" style="margin:0">요일 상관없이</span></div>';
+    if (g.type === "daily") html += '<p class="note" style="margin:0">매일 무지출에 도전해요.</p>';
+    html += "</div>";
+  });
+  if (s.participants.length < 4) html += '<button class="add" data-act="p-add">+ 참가자 추가 (최대 4명)</button>';
+  html += "</fieldset>";
+  html += '<fieldset><legend>승부모드</legend><div class="switch"><button data-act="b-on" aria-pressed="'+b.on+'" aria-label="승부모드"></button>'+(b.on ? "켜짐" : "꺼짐")+"</div>";
+  if (b.on){
+    html += '<div class="field" style="margin-top:12px"><label>승부 기간</label><div class="seg" role="group">'
+      + [["week","주간 합계"],["month","월간 합계"]].map(([k,l]) => '<button data-act="b-period" data-v="'+k+'" aria-pressed="'+(b.period === k)+'">'+l+"</button>").join("")+"</div></div>"
+      + '<div class="field"><label>이기는 기준</label><div class="seg" role="group">'
+      + [["count","성공 일수"],["rate","달성률"]].map(([k,l]) => '<button data-act="b-basis" data-v="'+k+'" aria-pressed="'+(b.basis === k)+'">'+l+"</button>").join("")+"</div>"
+      + '<p class="note">목표가 서로 다르면 달성률로 비교하는 게 공평해요.</p></div>'
+      + '<div class="field"><label for="f-stake">상품 / 벌칙</label><input class="inp" id="f-stake" data-field="stake" maxlength="40" placeholder="예) 진 사람이 치킨 사기, 1만원" value="'+esc(b.stake)+'"></div>';
+  }
+  html += "</fieldset>";
+  html += '<button class="btn primary" data-act="close" style="width:100%">완료</button>';
+  $("sheet").innerHTML = html;
+  $("sheet").setAttribute("aria-label", "챌린지 설정");
+}
+
+function changeSettings(fn, rerenderDialog){
+  if (readOnly) return;
+  fn(settings); saveSettings();
+  $("title").textContent = settings.title || "우리 0원 챌린지";
+  renderToday(); renderCal(); renderScore(); renderBattle();
+  if (rerenderDialog) renderSettings();
+}
+const findP = pid => settings.participants.find(p => p.id === pid);
+
+/* ---------- events ---------- */
+document.addEventListener("click", ev => {
+  const t = ev.target.closest("[data-act]");
+  if (!t){ if (ev.target === $("ov")) closeDialog(); return; }
+  const a = t.dataset.act, pid = t.dataset.pid;
+  switch (a){
+    case "set": { const cur = recOf(pid, t.dataset.date); setRecord(pid, t.dataset.date, cur === t.dataset.val ? null : t.dataset.val); break; }
+    case "cycle": { const cur = recOf(pid, t.dataset.date); setRecord(pid, t.dataset.date, cur === null ? "s" : cur === "s" ? "f" : null); break; }
+    case "day": ui.dayDate = t.dataset.date; openDialog("day"); break;
+    case "dlg-set": setRecord(pid, ui.dayDate, t.dataset.val || null); break;
+    case "prev": case "next": {
+      const dir = a === "prev" ? -1 : 1;
+      ui.anchor = ui.view === "week" ? addDays(ui.anchor, 7*dir) : new Date(ui.anchor.getFullYear(), ui.anchor.getMonth()+dir, 1);
+      renderCal(); renderScore(); break; }
+    case "go-today": ui.anchor = today(); renderCal(); renderScore(); break;
+    case "view": ui.view = t.dataset.v; lsSet(LS_KEY+":view", ui.view); renderCal(); renderScore(); break;
+    case "open-settings": openDialog("settings"); break;
+    case "copy-link": copyLink(); break;
+    case "close": closeDialog(); break;
+    case "battle-quick-on": changeSettings(s => { s.battle.on = true; }); openDialog("settings"); break;
+    case "p-color": changeSettings(() => { findP(pid).color = t.dataset.c; }, true); break;
+    case "p-goal": changeSettings(() => { const p = findP(pid), g = t.dataset.g;
+        p.goal = g === "days" ? {type:"days", days:[]} : g === "count" ? {type:"count", n:1} : {type:"daily"}; }, true); break;
+    case "p-day": changeSettings(() => { const g = findP(pid).goal, i = Number(t.dataset.i);
+        g.days = g.days.includes(i) ? g.days.filter(x => x !== i) : [...g.days, i].sort(); }, true); break;
+    case "p-n": changeSettings(() => { const g = findP(pid).goal; g.n = Math.min(7, Math.max(1, g.n + Number(t.dataset.d))); }, true); break;
+    case "p-add": changeSettings(s => {
+        const used = s.participants.map(p => p.color), color = Object.keys(COLORS).find(c => !used.includes(c)) || "purple";
+        s.participants.push({id:"p"+Math.random().toString(36).slice(2,9).replace(/[^a-z0-9]/g,""), name:"", color, goal:{type:"count",n:1}}); }, true); break;
+    case "p-del":
+      if (ui.confirmDel !== pid){ ui.confirmDel = pid; renderSettings(); break; }
+      ui.confirmDel = null; changeSettings(s => { s.participants = s.participants.filter(p => p.id !== pid); }, true); break;
+    case "b-on": changeSettings(s => { s.battle.on = !s.battle.on; }, true); break;
+    case "b-period": changeSettings(s => { s.battle.period = t.dataset.v; }, true); break;
+    case "b-basis": changeSettings(s => { s.battle.basis = t.dataset.v; }, true); break;
+  }
+});
+document.addEventListener("input", ev => {
+  const f = ev.target.dataset && ev.target.dataset.field;
+  if (!f) return;
+  const v = ev.target.value;
+  if (f === "title") changeSettings(s => { s.title = v.slice(0,40); });
+  if (f === "pname") changeSettings(() => { findP(ev.target.dataset.pid).name = v.slice(0,12); });
+  if (f === "stake") changeSettings(s => { s.battle.stake = v.slice(0,40); });
+});
+document.addEventListener("keydown", ev => { if (ev.key === "Escape" && ui.dialog) closeDialog(); });
+
+let rulesTimer = null;
+$("rules").addEventListener("input", () => {
+  const ta = $("rules");
+  $("rules-count").textContent = ta.value.length+" / 2000";
+  $("rules-state").textContent = "쓰는 중…";
+  clearTimeout(rulesTimer);
+  rulesTimer = setTimeout(() => {
+    rulesTimer = null;
+    changeSettings(s => { s.rules = ta.value.slice(0,2000); });
+    $("rules-state").textContent = mode === "db" ? "저장됐어요 · 같이 보여요" : "저장됐어요";
+  }, 700);
+});
+
+/* ---------- status & toast ---------- */
+function setStatus(s){
+  const map = {wait:"연결하는 중…", live:"실시간으로 같이 보는 중", local:"Firebase 설정 전이라 이 기기에만 저장돼요", slow:"연결이 늦어지고 있어요. 보이는 기록이 최신이 아닐 수 있어요", ro:"지금은 저장할 수 없어요"};
+  $("status").dataset.s = s; $("status").querySelector("span").textContent = map[s];
+}
+let toastTimer;
+function toast(msg){ const el = $("toast"); el.textContent = msg; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 3600); }
+
+/* ---------- boot ---------- */
+function startLocal(){
+  mode = "local"; setStatus("local");
+  try { const raw = lsGet(LS_KEY+":state"); if (raw){ const st = JSON.parse(raw); settings = sanitize(st.settings);
+      recDocs = {}; for (const k in (st.recDocs || {})){ const r = sanRec(st.recDocs[k]); if (r) recDocs[k] = r; } rebuildRecs(); } } catch(e){}
+  renderAll(); syncRules(true);
+}
+/* ---------- rooms: the secret link is the key ---------- */
+const RECENT_KEY = "zero-won-challenge:recent";
+function recentRooms(){ try { const r = JSON.parse(lsGet(RECENT_KEY) || "[]"); return Array.isArray(r) ? r.filter(x => x && ROOM_RE.test(x.id)) : []; } catch(e){ return []; } }
+function rememberRoom(){
+  const list = recentRooms().filter(x => x.id !== roomId);
+  list.unshift({id: roomId, title: (settings.title || "우리 0원 챌린지").slice(0,40), at: Date.now()});
+  lsSet(RECENT_KEY, JSON.stringify(list.slice(0,8)));
+}
+function newRoomId(){
+  const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => abc[b % abc.length]).join("");
+}
+const roomLink = () => location.origin + location.pathname + "#" + roomId;
+async function copyLink(){
+  const link = roomLink(), box = $("linkbox");
+  try { await navigator.clipboard.writeText(link); toast("초대 링크를 복사했어요. 친구한테 보내주세요!"); }
+  catch(e){ box.hidden = false; box.value = link; box.focus(); box.select(); toast("링크를 길게 눌러서 복사해 주세요."); }
+  lsSet(LS_KEY+":invited", "1");
+}
+const configured = !Object.values(firebaseConfig).some(v => String(v).startsWith("여기에"));
+
+function showLanding(msg){
+  $("landing").hidden = false; $("app").hidden = true;
+  if (msg) $("landing-msg").textContent = msg;
+  const list = recentRooms();
+  if (list.length){
+    $("recent").hidden = false;
+    $("recent-list").innerHTML = list.map(r => '<a href="#'+r.id+'"><span>'+esc(r.title)+"</span><small>"+new Date(r.at).toLocaleDateString("ko-KR")+"</small></a>").join("");
+  }
+}
+$("btn-create").addEventListener("click", async () => {
+  const id = newRoomId();
+  if (configured){
+    try {
+      const fs = getFirestore(initializeApp(firebaseConfig));
+      await setDoc(fsDoc(fs, "rooms/"+id), clone(DEFAULT));
+    } catch(e){ toast("챌린지를 만들지 못했어요. Firebase 설정과 보안 규칙을 확인해 주세요."); return; }
+  }
+  location.hash = id;
+});
+window.addEventListener("hashchange", () => location.reload());
+
+/* Firestore wrapped in the same small shape the page already uses */
+function firestoreAdapter(fs){
+  const meta = m => ({fromCache: m.fromCache, hasPendingWrites: m.hasPendingWrites});
+  return {
+    doc: path => ({
+      set: body => setDoc(fsDoc(fs, path), body),
+      onSnapshot: (next, err) => fsSnap(fsDoc(fs, path), {includeMetadataChanges:true},
+        s => next({exists: s.exists(), data: () => s.data(), metadata: meta(s.metadata)}), err)
+    }),
+    collection: path => ({
+      onSnapshot: (next, err) => fsSnap(fsCol(fs, path), {includeMetadataChanges:true},
+        qs => next({docs: qs.docs.map(d => ({id: d.id, data: () => d.data()})), metadata: meta(qs.metadata)}), err)
+    })
+  };
+}
+
+async function boot(){
+  if (!ROOM_RE.test(roomId)){ showLanding(); return; }
+  $("app").hidden = false;
+  $("invite").hidden = lsGet(LS_KEY+":invited") === "1";
+  renderAll();
+  if (!configured){ startLocal(); return; }
+  try { db = firestoreAdapter(getFirestore(initializeApp(firebaseConfig))); } catch(e){ startLocal(); return; }
+  mode = "db";
+  let confirmed = { s:false, r:false };
+  const slow = setTimeout(() => { if (!confirmed.s || !confirmed.r) setStatus("slow"); }, 10000);
+  const arrived = (k, snap) => { if (!snap.metadata.fromCache){ confirmed[k] = true; if (confirmed.s && confirmed.r){ clearTimeout(slow); setStatus("live"); } } };
+  const onErr = e => { clearTimeout(slow); setStatus("slow"); if (e && e.code === "permission-denied") toast("기록을 불러오지 못했어요. Firebase 보안 규칙을 확인해 주세요."); };
+  db.doc(SETTINGS_PATH).onSnapshot(snap => {
+    arrived("s", snap);
+    if (!snap.exists && !snap.metadata.fromCache){ showLanding("이 링크의 챌린지를 찾을 수 없어요. 링크가 맞는지 확인하거나 새로 만들어 주세요."); return; }
+    if (settingsBusy() || rulesTimer || !snap.exists) return;
+    settings = sanitize(snap.data());
+    rememberRoom();
+    renderAll();
+  }, onErr);
+  db.collection(RECORDS_PATH).onSnapshot(snap => {
+    arrived("r", snap);
+    const m = {};
+    snap.docs.forEach(d => { const r = sanRec(d.data()); if (r) m[d.id] = r; });
+    const pre = RECORDS_PATH + "/";
+    for (const path in pending) if (path.startsWith(pre)) m[path.slice(pre.length)] = pending[path];
+    recDocs = m; rebuildRecs(); renderAll();
+  }, onErr);
+}
+boot();
+})();
+</script>
+</body>
+</html>
