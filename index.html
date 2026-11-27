@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="0원 챌린지">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>우리 0원 챌린지</title>
+<title>0원 챌린지</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Do+Hyeon&family=Jua&family=Gowun+Dodum&display=swap">
@@ -322,7 +322,7 @@ body{background-color:var(--bg);background-image:radial-gradient(#B9DEC4 1.5px,t
       <rect x="9" y="6" width="1" height="1" fill="#2B2840"/><rect x="6" y="4" width="3" height="1" fill="#2B2840"/>
       <rect x="3" y="13" width="2" height="2" fill="#FF5C8A"/><rect x="9" y="13" width="2" height="2" fill="#FF5C8A"/><rect x="4" y="6" width="1" height="1" fill="#FFB3C9"/>
     </svg>
-    <h1>우리 0원 챌린지</h1>
+    <h1>0원 챌린지</h1>
     <p id="landing-msg">친구랑 같이 하는 무지출 챌린지예요. 챌린지를 만들면 우리만 들어올 수 있는 비밀 링크가 생겨요.</p>
     <div><button class="btn primary" id="btn-create">새 챌린지 만들기</button></div>
     <div class="recent" id="recent" hidden><h2>최근에 연 챌린지</h2><div id="recent-list"></div></div>
@@ -345,7 +345,7 @@ body{background-color:var(--bg);background-image:radial-gradient(#B9DEC4 1.5px,t
         <rect x="3" y="13" width="2" height="2" fill="#FF5C8A"/><rect x="9" y="13" width="2" height="2" fill="#FF5C8A"/><rect x="4" y="6" width="1" height="1" fill="#FFB3C9"/>
       </svg>
       <div style="min-width:0">
-        <h1 id="title">우리 0원 챌린지</h1>
+        <h1 id="title">0원 챌린지</h1>
         <div class="status" id="status" data-s="wait"><i></i><span>연결하는 중…</span></div>
       </div>
     </div>
@@ -412,7 +412,7 @@ import { getFirestore, doc as fsDoc, collection as fsCol, setDoc, onSnapshot as 
 const DOW = ["월","화","수","목","금","토","일"];
 const COLORS = {pink:"var(--pink)",blue:"var(--blue)",orange:"var(--orange)",purple:"var(--purple)"};
 const DEFAULT = {
-  title:"우리 0원 챌린지",
+  title:"0원 챌린지",
   rules:"",
   participants:[
     {id:"pA",name:"나",color:"pink",goal:{type:"count",n:2}},
@@ -465,7 +465,7 @@ function sanGoal(g){
 function sanitize(d){
   const s = clone(DEFAULT);
   if (!d || typeof d !== "object") return s;
-  if (typeof d.title === "string") s.title = d.title.slice(0,40);
+  if (typeof d.title === "string") s.title = (d.title === "우리 0원 챌린지" ? "0원 챌린지" : d.title).slice(0,40);
   if (typeof d.rules === "string") s.rules = d.rules.slice(0,2000);
   if (Array.isArray(d.participants)){
     const ps = d.participants.filter(p => p && typeof p.id === "string" && /^[A-Za-z0-9]{1,20}$/.test(p.id)).slice(0,4)
@@ -602,6 +602,55 @@ function setRecord(pid, ds, val){
   lastPop = val ? pid+"|"+ds : null;
   renderAll();
   queueWrite(RECORDS_PATH+"/"+id, body);
+  if (val) toast(nextCheer(val), 4200);
+}
+
+/* ---------- cheer messages (rotating, no repeats until the deck runs out) ---------- */
+const QUOTES = [
+  "“티끌 모아 태산” — 오늘의 0원도 태산의 한 조각!",
+  "“한 푼 아낀 것은 한 푼 번 것이다” — 벤저민 프랭클린",
+  "“작은 지출을 조심하라. 작은 구멍이 큰 배를 가라앉힌다” — 벤저민 프랭클린",
+  "“가랑비에 옷 젖는 줄 모른다” — 작은 지출이 제일 무서워요",
+  "“쓰고 남은 돈을 저축하지 말고, 저축하고 남은 돈을 써라” — 워런 버핏",
+  "“부자가 되는 길은 버는 것보다 지키는 데 있다”",
+  "“필요 없는 것을 사면, 곧 필요한 것을 팔게 된다” — 워런 버핏",
+  "“절약은 그 자체로 큰 수입이다” — 키케로"
+];
+const CHEERS = {
+  s: [
+    "0원 클리어! 지갑이 오늘 푹 쉬었어요 💤",
+    "완벽해요! 돼지 저금통이 꿀꿀 웃고 있어요 🐷",
+    "참았다! 오늘의 나, 진짜 멋있다 ✨",
+    "EXP +1! 절약 레벨이 오르고 있어요 ⬆",
+    "오늘도 0원! 미래의 내가 고마워할 거예요",
+    "통장 방어 성공! 🛡",
+    "이 기세로 연속 기록 쭉쭉 가봐요 🔥",
+    "지출 몬스터를 물리쳤다! VICTORY!",
+    "대단해요! 친구한테 자랑해도 돼요 😎",
+    "아낀 돈만큼 꿈에 한 칸 더 가까워졌어요"
+  ],
+  f: [
+    "괜찮아요, 내일 다시 0원 도전! 💪",
+    "한 번 쓴 건 쓴 거고, 내일은 내일의 0원이 있어요",
+    "GAME OVER…가 아니라 CONTINUE? ▶ 내일 다시!",
+    "음… 그거 꼭 필요했던 거 맞죠? 👀",
+    "지갑이 살짝 울고 있어요 🥲 내일은 달래줘요",
+    "넘어져도 괜찮아요. 다시 일어나는 게 진짜 실력!",
+    "친구한테 지고 있을지도 몰라요… 내일 역전 가자 🔥",
+    "오늘 쓴 돈, 영수증 보면서 반성 1분만 ⏱",
+    "장바구니는 하루 묵혀두기! 내일 보면 생각보다 안 필요할걸요?",
+    "솔직하게 기록한 것만으로도 절반은 성공이에요 👍"
+  ]
+};
+const cheerDecks = {};
+function nextCheer(kind){
+  let deck = cheerDecks[kind];
+  if (!deck || !deck.length){
+    const pool = CHEERS[kind].concat(QUOTES);
+    for (let i = pool.length - 1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    deck = cheerDecks[kind] = pool;
+  }
+  return deck.pop();
 }
 
 /* ---------- rendering ---------- */
@@ -766,7 +815,7 @@ function syncRules(force){
 }
 
 function renderAll(){
-  $("title").textContent = settings.title || "우리 0원 챌린지";
+  $("title").textContent = settings.title || "0원 챌린지";
   renderToday(); renderCal(); renderScore(); renderBattle(); syncRules(false);
   $("btn-settings").disabled = readOnly;
   if (ui.dialog === "day") renderDayDialog();
@@ -831,7 +880,7 @@ function renderSettings(){
 function changeSettings(fn, rerenderDialog){
   if (readOnly) return;
   fn(settings); saveSettings();
-  $("title").textContent = settings.title || "우리 0원 챌린지";
+  $("title").textContent = settings.title || "0원 챌린지";
   renderToday(); renderCal(); renderScore(); renderBattle();
   if (rerenderDialog) renderSettings();
 }
@@ -903,7 +952,7 @@ function setStatus(s){
   $("status").dataset.s = s; $("status").querySelector("span").textContent = map[s];
 }
 let toastTimer;
-function toast(msg){ const el = $("toast"); el.textContent = msg; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 3600); }
+function toast(msg, ms){ const el = $("toast"); el.textContent = msg; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, ms || 3600); }
 
 /* ---------- boot ---------- */
 function startLocal(){
@@ -917,7 +966,7 @@ const RECENT_KEY = "zero-won-challenge:recent";
 function recentRooms(){ try { const r = JSON.parse(lsGet(RECENT_KEY) || "[]"); return Array.isArray(r) ? r.filter(x => x && ROOM_RE.test(x.id)) : []; } catch(e){ return []; } }
 function rememberRoom(){
   const list = recentRooms().filter(x => x.id !== roomId);
-  list.unshift({id: roomId, title: (settings.title || "우리 0원 챌린지").slice(0,40), at: Date.now()});
+  list.unshift({id: roomId, title: (settings.title || "0원 챌린지").slice(0,40), at: Date.now()});
   lsSet(RECENT_KEY, JSON.stringify(list.slice(0,8)));
 }
 function newRoomId(){
